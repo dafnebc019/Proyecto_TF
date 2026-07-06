@@ -1,9 +1,11 @@
 # Proyecto_TF
-##AUTORES :
+
+
+## AUTORES :
 Amelia Bolaños 
 Dayra Espinar Catro
-##Curso :
-#Principios de Programacion - Bioinformatica
+## Curso :
+# Principios de Programacion - Bioinformatica
 # Analizador Genómico de *Nematostella vectensis* 🧬
 
 Este repositorio contiene un robusto script de automatización en Bash diseñado para procesar, limpiar y analizar archivos de anotación genómica en formato **GFF (General Feature Format)** provenientes de la NCBI. El proyecto se enfoca en el estudio de la arquitectura génica y la complejidad estructural/regulatoria (splicing alternativo) de la anémona de mar *Nematostella vectensis*.
