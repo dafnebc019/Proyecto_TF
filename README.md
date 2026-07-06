@@ -1,11 +1,11 @@
-# Proyecto_TF
-## Analisis mediante formato .gff
+#  🧬 Proyecto_TF
+## 🗃️ Análisis mediante formato .gff
 
 ## AUTORES :
 * Amelia Bolaños 
 * Dayra Espinar Catro
 ## Curso :
-# Principios de Programacion - Bioinformatica
+# Principios de Programación - Bioinformatica
 ## Profesores:
 * Frank Lino Guzman Escudero
 * Manuel Alain Ramirez Saenz
