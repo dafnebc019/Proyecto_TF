@@ -1,14 +1,15 @@
 #  🧬 Proyecto_TF
 ## 🗃️ Análisis mediante formato .gff
+## Curso: Principios de Programación - Bioinformatica
 
 ## AUTORES :
 * Amelia Bolaños 
 * Dayra Espinar Catro
-## Curso :
-# Principios de Programación - Bioinformatica
+
 ## Profesores:
 * Frank Lino Guzman Escudero
 * Manuel Alain Ramirez Saenz
+  
 **Universidad:** UPC - Facultad de Ciencias de la Salud 
 
 # Analizador Genómico de *Nematostella vectensis* 🧬
