@@ -7,9 +7,9 @@
 ## Curso :
 # Principios de Programacion - Bioinformatica
 ## Profesores:
-*Frank Lino Guzman Escudero
-*Manuel Alain Ramirez Saenz
-**Universidad:** UPC - Facultad de Ciencias de la Salud - Programa de Biología 
+* Frank Lino Guzman Escudero
+* Manuel Alain Ramirez Saenz
+**Universidad:** UPC - Facultad de Ciencias de la Salud 
 
 # Analizador Genómico de *Nematostella vectensis* 🧬
 
