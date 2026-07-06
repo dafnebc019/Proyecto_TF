@@ -2,10 +2,15 @@
 
 
 ## AUTORES :
-Amelia Bolaños 
-Dayra Espinar Catro
+* Amelia Bolaños 
+* Dayra Espinar Catro
 ## Curso :
 # Principios de Programacion - Bioinformatica
+## Profesores:
+*Frank Lino Guzman Escudero
+*Manuel Alain Ramirez Saenz
+**Universidad:** UPC - Facultad de Ciencias de la Salud - Programa de Biología 
+
 # Analizador Genómico de *Nematostella vectensis* 🧬
 
 Este repositorio contiene un robusto script de automatización en Bash diseñado para procesar, limpiar y analizar archivos de anotación genómica en formato **GFF (General Feature Format)** provenientes de la NCBI. El proyecto se enfoca en el estudio de la arquitectura génica y la complejidad estructural/regulatoria (splicing alternativo) de la anémona de mar *Nematostella vectensis*.
