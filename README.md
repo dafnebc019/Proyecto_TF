@@ -42,3 +42,100 @@ El script se ejecuta directamente sobre cualquier entorno Unix/Linux (incluyendo
 ```bash
 # Asegurar permisos de ejecución en la terminal de Cloud Shell
 chmod +x script_AnalisisGFF.sh
+
+# ANALISIS 1
+ejecucion del scrip
+echo -e "\n${VERDE} Ejecutando Analisis 1: SPLICING ALTERNATIVO....${RESET}"
+                echo "Splicing Alternativo de Nematostella Vectnesis"
+                #filtramos los ARNm, extraemis el ID del gen padre, contamos y ordenamos numericamente
+                #Guardar todo limpio en un archivo temporal
+                grep -v '^#' "$ARCHIVO_INPUT" | awk '$3 == "mRNA" {print $9}' | grep -o 'Parent=gene-[^;]*' | cut -d'=' -f2 | sort | uniq -c | sort -nr > .temp_splicing.txt
+
+                #Contamos cuantos gnes en total tienen mas de 1 isoforma
+                TOTAL_SPLICING=$(wc -l < .temp_splicing.txt)
+                
+                #Imprimir la salida y leemos las 5 primeras lineas 
+                echo " TOP 5 genes con mas variantes de splicing: "
+                echo "------------------------"
+                head -n 5 .temp_splicing.txt | awk '{print "Gen: " $2 " -> Isoformas: " $1}'
+                echo " -------------------------"
+                echo -e "Total de genes con Splicing Alternativo: ${AMARILLO}$TOTAL_SPLICING${RESET}"
+
+                # Guardar el reporte final completo y limpiar el archivo temporal 
+                mv .temp_splicing.txt reporte_splicing.txt
+                echo -e "\n${VERDE} OK reporte completo se guardo en 'reporte_splicing.txt'${RESET}"
+                ;;
+
+# ANALISIS 2
+ echo -e "\n${VERDE}Ejecutando Analisis 2: Arquitectura genica... ${RESET}"
+                echo "Calculando longitudes (Prom, Max, Min), exones, intrones y proporciones "
+                echo "-------------------------------------------------------"
+
+                awk -F'\t' '
+                $3 == "gene" {
+                        n_genes++
+                        len = ($5 - $4 + 1)
+                        len_genes += len
+
+                        #Rastrear Maximos y minimos de genes
+                        if (n_genes == 1) { max_g = min_g = len }
+                        if (len > max_g) { max_g = len }
+                        if (len < min_g) { min_g = len }
+                }
+                $3 == "exon" {
+                        n_exones++
+                        len_exones += ($5 - $4 + 1)
+                }
+                END {
+                        #Calculos Matematicos biologicos
+                        n_intrones = n_exones - n_genes
+                        if (n_intrones > 0) {
+                                len_intrones= len_genes - len_exones
+                                prom_intron= len_intrones / n_intrones
+                                if (prom_intron < 0){ prom_intron = 0; len_intrones = 0  }
+                        } else {
+                                n_intrones = 0; prom_intron = 0; len_intrones = 0
+                        }
+
+                        print "METRICAS DE GENES:"
+                        printf "Numero total de genes: %d\n", n_genes
+                        if (n_genes > 0) {
+                                printf "Longitud promedio de los genes: %.2f pb\n", len_genes / n_genes
+                                printf "Longitud MAXIMA de gen encontrada: %d pb\n", max_g
+                                printf "Longitud Minim de gen encontrada: %d pb\n", min_g
+                        }
+                        print "---------------------------------"
+                        print "ESTRUCTURA DE EXONES E INTRONES:"
+                        printf "Numero total de exones anotados : %d\n", n_exones
+                        printf "Numero estimado de intrones : %d\n", n_intrones
+                        if (n_genes > 0) {
+                                printf "Promedio de exones por gen: %.2f exones/gen\n", n_exones / n_genes
+                        if (n_exones > 0) printf "• Longitud promedio de exones : %.2f pb\n", len_exones / n_exones
+                        if (n_intrones > 0) printf "• Longitud promedio de intrones    : %.2f pb\n", prom_intron
+
+                        print "---------------------------------"
+                        print "PROPORCIONES DEL PAISAJE GÉNICO: "
+                        total_espacio = len_exones + len_intrones
+                        if (total_espacio > 0) {
+                                printf "Regiones Codificantes (exones): %.2f%%\n", (len_exones / total_espacio) * 100
+                                printf "Regiones No Codificantes (Intron): %.2f%%\n", (len_intrones / total_espacio) * 100
+                        }
+                }' "$ARCHIVO_INPUT" > arquitectura_gff.txt
+
+                cat arquitectura_gff.txt
+
+                echo "-----------------------------------------"
+                echo -e "${AMARILLO}RANKING DE LOS 10 GENES MÁS LARGOS:${RESET}"
+                echo "---------------------------------"
+                grep -v '^#' "$ARCHIVO_INPUT" |\
+                awk -F'\t' '$3 == "gene" {print $5-$4+1, $9}' |\
+                grep -oE '^[0-9]+ .*ID=[^;]*' |\
+                sed 's/ID=//' |\
+                sort -k1,1nr |\
+                head -n 10 |\
+                awk '{printf "%d. Gen: %-30s -> Tamaño: %s pb\n", NR, $2, $1}'
+                echo "---------------------------------------"
+
+                echo -e "${VERDE}[OK] Módulo 2 finalizado. Reporte guardado en 'arquitectura_gff.txt'.${RESET}"
+                ;;
+
