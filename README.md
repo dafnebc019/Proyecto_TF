@@ -49,6 +49,19 @@ $$\text{Puntuación} = \text{Exones Únicos} + (\text{Isoformas} \times 5)$$
 ---
 
 ## 🛠️ Requisitos e Instalación
+* 1. Clona el repositorio:*
+'''bash    
+git clone https://github.com/dafnebc019/Proyecto_TF.git
+   cd Proyecto_TF
+
+
+* 2. Otorga permisos de ejecución al script:* 
+
+bash   chmod +x script_AnalisisGFF.sh
+
+
+**Coloca tu archivo .gff de entrada en el mismo directorio (o anota su ruta completa para usarla en el siguiente paso).**
+
 
 El script se ejecuta directamente sobre cualquier entorno Unix/Linux (incluyendo Google Cloud Shell) y solo requiere utilidades nativas de la terminal:
 
