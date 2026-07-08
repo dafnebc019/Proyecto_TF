@@ -35,7 +35,7 @@ Este repositorio contiene un robusto script de automatización en Bash diseñado
 * **Proporciones del Paisaje Ómico:** Determina el porcentaje exacto de regiones codificantes (exones) frente a regiones no codificantes (intrones) dentro de los límites genómicos.
 * **Ranking de Dimensiones:** Extrae automáticamente el TOP 10 de los genes físicamente más largos del genoma.
 
-### Módulo 3: Análisis de Complejidad Estructural y Splicing Alternativo
+### Módulo 3: Análisis de Complejidad Estructural 
 Aplica un **Índice de Complejidad Genómica** basado en la arquitectura y capacidad de transcripción del locus:
 $$\text{Puntuación} = \text{Exones Únicos} + (\text{Isoformas} \times 5)$$
 
