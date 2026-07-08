@@ -49,6 +49,17 @@ $$\text{Puntuación} = \text{Exones Únicos} + (\text{Isoformas} \times 5)$$
 ---
 
 ## 🛠️ Requisitos e Instalación
+El script está diseñado para correr en cualquier entorno Unix/Linux (incluyendo Google Cloud Shell) y solo necesita utilidades nativas de terminal:
+
+´´bash
+awk
+grep, sed, sort, uniq, cut 
+(incluidos por defecto en la mayoría de distribuciones Linux)
+Un archivo de anotación genómica en formato .gff de Nematostella vectensis (descargable desde NCBI)
+
+INSTALACION
+
+
 * 1. Clona el repositorio:*
 '''bash    
 git clone https://github.com/dafnebc019/Proyecto_TF.git
