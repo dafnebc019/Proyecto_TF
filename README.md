@@ -50,7 +50,8 @@ Este repositorio contiene un robusto script de automatización en Bash diseñado
 * **Identificación de Casos Biológicos Relevantes:** Detecta genes con alta densidad transcriptómica y genes extensos con baja diversidad de isoformas ("Gigantes Dormidos").
 * **Reporte Automático:** Genera el archivo `reporte_correlacion.txt.`
   > **Pregunta biológica:** ¿el tamaño del gen predice cuánta complejidad regulatoria (splicing alternativo) tiene?
-El Módulo 3 no depende de los reportes de texto de los Módulos 1 y 2 — vuelve a leer el archivo GFF original y recalcula sus propias métricas, por lo que puede ejecutarse de forma independiente.
+
+* El Módulo 3 no depende de los reportes de texto de los Módulos 1 y 2 — vuelve a leer el archivo GFF original y recalcula sus propias métricas, por lo que puede ejecutarse de forma independiente.
 
 > **Nota metodológica:** los **pseudogenes** (766 en este genoma) se excluyen de los tres módulos, ya que no participan de forma significativa en procesos activos de splicing regulado — es una decisión biológica deliberada, no una limitación técnica del script.
 
