@@ -35,7 +35,9 @@ Este repositorio contiene un robusto script de automatización en Bash diseñado
  > **Pregunta biológica:** ¿qué genes tienen mayor diversidad transcripcional?
 
 ### Módulo 2: Arquitectura Génica 
+Reconstruye la jerarquía biológica real `gen → transcrito → exón` para describir cómo está construido el genoma a nivel estructural.
 * **Métricas de Genes:** Calcula el número total de genes, así como sus longitudes promedio, máxima y mínima (pb).
+* **Detección universal de transcritos:** en lugar de limitarse a `mRNA`, identifica cualquier tipo de transcrito hijo directo de un gen (`tRNA`, `rRNA`, `lnc_RNA`, `snRNA`, `snoRNA`, `ncRNA`, `transcript`) mediante la regla `Parent=gene-...`, sin necesidad de listar cada tipo manualmente.
 * **Paisaje Exón/Intrón:** Cuantifica el número total de exones, estima los intrones y calcula el promedio de exones e intrones por gen.
 * **Caracterización del Paisaje Génico:** Determina la proporción de regiones codificantes (exones) y no codificantes (intrones) dentro de la arquitectura génica.
 * **Control de Calidad:** Verifica la correcta asociación entre transcritos y exones antes de realizar los cálculos estructurales.
@@ -77,16 +79,18 @@ bash --version
 
 ## 📥INSTALACIÓN
 
-* 1. Clona el repositorio:*
-'''bash    
+* 1. Clona el repositorio:
+
+```bash    
 git clone https://github.com/dafnebc019/Proyecto_TF.git
    cd Proyecto_TF
+```
 
+* 2. Otorga permisos de ejecución al script:
 
-* 2. Otorga permisos de ejecución al script:* 
-
-bash   chmod +x script_AnalisisGFF.sh
-
+```bash
+chmod +x script_AnalisisGFF.sh
+```
 
 **Coloca tu archivo .gff de entrada en el mismo directorio (o anota su ruta completa para usarla en el siguiente paso).**
 
@@ -137,6 +141,7 @@ Introduce nombre de estudiante: Amelia Dafne Cruz
 Ingrese una opcion [1-4]: 1
 ```
 ---
+
 ## 📄 Entrada esperada
 
 Archivo `.gff`/`.gff3` con las 9 columnas estándar (`seqid`, `source`, `type`, `start`, `end`, `score`, `strand`, `phase`, `attributes`), donde `attributes` contiene pares `clave=valor` separados por `;` (ej. `ID=`, `Parent=`, `gene=`).
@@ -158,302 +163,6 @@ El script valida automáticamente (con mensajes de error en rojo) que:
 - La extensión sea estrictamente `.gff` o `.gff3`.
 
 ---
-
-## ✅ EJECUCIÓN DE ANÁLISIS 
-El script realiza un análisis integral de archivos GFF3 mediante un menú interactivo. Cada módulo procesa la anotación genómica desde una perspectiva diferente, permitiendo explorar la organización estructural de los genes, la presencia de splicing alternativo y la relación entre la arquitectura génica y la complejidad transcriptómica.
-
-### 🔬 Modulo 1.- Splicing Alternativo
-Identifica y cuantifica los genes que presentan múltiples isoformas transcriptómicas, mostrando los genes con mayor número de variantes de splicing y generando un reporte completo.
-```bash
- 1)
-                echo -e "\n${VERDE} Ejecutando Analisis 1: SPLICING ALTERNATIVO....${RESET}"
-                echo "Splicing Alternativo de Nematostella Vectnesis"
-                grep -v '^#' "$ARCHIVO_INPUT" | awk '$3 == "mRNA" {print $9}' | grep -o 'Parent=gene-[^;]*' | cut -d'=' -f2 | sort | uniq -c | sort -nr > .temp_splicing.txt
-                TOTAL_SPLICING=$(wc -l < .temp_splicing.txt)
-                echo " TOP 5 genes con mas variantes de splicing: "
-                echo "------------------------"
-                head -n 5 .temp_splicing.txt | awk '{print "Gen: " $2 " -> Isoformas: " $1}'
-                echo " -------------------------"
-                echo -e "Total de genes con Splicing Alternativo: ${AMARILLO}$TOTAL_SPLICING${RESET}"
-                mv .temp_splicing.txt reporte_splicing.txt
-                echo -e "\n${VERDE} OK reporte completo se guardo en 'reporte_splicing.txt'${RESET}"
-                ;;
-```
-----
- ### 📊 Módulo 2. Arquitectura Génica 
-Caracteriza la estructura de los genes calculando métricas como longitud génica, número de exones e intrones, proporción de regiones codificantes y no codificantes, además de identificar los genes de mayor tamaño.
-```bash
-  2)
-                echo -e "\n${VERDE}Ejecutando Analisis 2: Arquitectura genica... ${RESET}"
-                echo "Calculando longitudes (Prom, Max, Min), exones, intrones y proporciones "
-                echo "-------------------------------------------------------"
-                awk -F'\t' '
-        #Funcion auxiliar para extraer atribtos de la columna 9
-                function sacar_valor(campo9, prefijo, partes, i, resutado) {
-                        n_partes = split(campo9, partes, ";")
-                        for (i =1; i <= n_partes; i++){
-                                if (index(partes[i], prefijo) == 1){
-                                        resultado = substr(partes[i], length(prefijo) +1)
-                                }
-                        }
-                        return resultado
-                }
-                $3 == "gene" {
-                        n_genes++
-                        len = ($5 - $4 + 1)
-                        len_genes += len
-                        if (n_genes == 1) { max_g = min_g = len }
-                        if (len > max_g) { max_g = len }
-                        if (len < min_g) { min_g = len }
-                }
-        #ENFOQUE UNIVERSAL: Detectar cualquier tipo de transcrito intermediario
-                # (mRNA,rRNA, tRNA, ncRNA, lnc_RNA,etc sin necesidad de listarlos
-                #uno por uno: regla -> Si mi Parent empieza con gene- 
-                $3 != "gene" && $3 != "exon" && $3 != "CDS" && \
-                $3 != "five_prime_UTR" && $3 != "three_prime_UTR" {
-                        id_feat = sacar_valor($9, "ID=")
-                        id_parent = sacar_valor($9, "Parent=")
-                        if (id_feat != "" && id_parent ~ /^gene-/) {
-                                mrna_gene[id_feat] = id_parent
-                        }
-                }
-        # Contar exones y guardar sus longitudes por transcrito
-                $3 == "exon" {
-                        id_mrna = sacar_valor($9, "Parent=")
-                        if (id_mrna != "") {
-                                exones_mrna[id_mrna]++
-                                len_exones += ($5 - $4 + 1)
-                        }
-                }
-                END {
-                #--------------------------------------------
-                #CONTROL DE CALIDAD (lineas temporales de diagnostico)
-                #------------------------------------------
-                        for (tx in mrna_gene) { total_tx++}
-                        print " == CONTROL DE CALIDAD DE TRANSCRITOS =="
-                        printf "Transcript almaceados. %d\n", total_tx
-                        printf "Transcript con exones: %d\n", length(exones_mrna)
-                        print " ===============================\n"
-                # -------------
-
-                        #1.Comsolidar exones e intrones usando la jerarquia biologica
-                        for (tx in exones_mrna) {
-                                g = mrna_gene[tx]
-                                if (g != "") {
-                                        exones_gene[g] += exones_mrna[tx]
-                                        #Proteccion biologica: Sol hay intrones si exones > 1
-                                        if (exones_mrna[tx] > 1) {
-                                                intrones_gene[g] += (exones_mrna[tx] - 1)
-                                        }
-                                }
-                        }
-                        #2. Acumulacion totales Globales desde los genes
-                        for (g in exones_gene) {
-                                n_exones += exones_gene[g]
-                                n_intrones += intrones_gene[g]
-                        }
-
-                        if (n_intrones > 0) {
-                                len_intrones= len_genes - len_exones
-                                if (len_intrones < 0) { len_intrones = 0 }
-                                prom_intron= len_intrones / n_intrones
-                        } else {
-                                n_intrones = 0; prom_intron = 0; len_intrones = 0
-                        }
-                        print "METRICAS DE GENES:"
-                        printf "Numero total de genes: %d\n", n_genes
-                        if (n_genes > 0) {
-                                printf "Longitud promedio de los genes: %.2f pb\n", len_genes / n_genes
-                                printf "Longitud MAXIMA de gen encontrada: %d pb\n", max_g
-                                printf "Longitud Minim de gen encontrada: %d pb\n", min_g
-                        }
-                        print "---------------------------------"
-                        print "ESTRUCTURA DE EXONES E INTRONES:"
-                        printf "Numero total de exones anotados : %d\n", n_exones
-                        printf "Numero estimado de intrones : %d\n", n_intrones
-                        if (n_genes > 0) {
-                                printf "Promedio de exones por gen: %.2f exones/gen\n", n_exones / n_genes
-                                printf "Promedio de intrones por gen : %.2f intrones/gen\n", n_intrones / n_genes
-                        }
-                        if (n_exones > 0) printf "• Longitud promedio de exones : %.2f pb\n", len_exones / n_exones
-                        if (n_intrones > 0) printf "• Longitud promedio de intrones    : %.2f pb\n", prom_intron
-                        print "---------------------------------"
-                        print "PROPORCIONES DEL PAISAJE GÉNICO: "
-                        total_espacio = len_exones + len_intrones
-                        if (total_espacio > 0) {
-                                printf "Regiones Codificantes (exones): %.2f%%\n", (len_exones / total_espacio) * 100
-                                printf "Regiones No Codificantes (Intron): %.2f%%\n", (len_intrones / total_espacio) * 100
-                        }
-                }' "$ARCHIVO_INPUT" > arquitectura_gff.txt
-                cat arquitectura_gff.txt
-                echo "-----------------------------------------"
-                echo -e "${AMARILLO}RANKING DE LOS 10 GENES MÁS LARGOS:${RESET}"
-                echo "---------------------------------"
-                grep -v '^#' "$ARCHIVO_INPUT" |\
-                awk -F'\t' '$3 == "gene" {print $5-$4+1, $9}' |\
-                grep -oE '^[0-9]+ .*ID=[^;]*' |\
-                sed 's/ID=//' |\
-                sort -k1,1nr |\
-                head -n 10 |\
-                awk '{printf "%d. Gen: %-30s -> Tamaño: %s pb\n", NR, $2, $1}'
-                echo "---------------------------------------"
-                echo -e "${VERDE}[OK] Módulo 2 finalizado. Reporte guardado en 'arquitectura_gff.txt'.${RESET}"
-                ;;
-
-```
-
-###  🧪 Módulo 3. Correlación Estructura–Complejidad
-Evalúa la relación entre la longitud de los genes y su número de isoformas mediante el coeficiente de correlación de Pearson. También clasifica los genes según su arquitectura, identifica genes compactos con alta complejidad transcriptómica y genes extensos con baja diversidad de isoformas.
-
-```bash
-        3)
-                clear
-                echo -e "${VERDE}Ejecutando Analisis 3: Correlacion Estructura-Complejidad...${RESET}"
-                echo "¿La arquitectura de un gen está relacionada con su complejidad transcriptómica?.."
-                echo  "-----------------------------"
-                REPORTE="reporte_correlacion.txt"
-                awk -F'\t' '
-                function sacar_valor(campo9, prefijo, partes, i, resultado) {
-                        n_partes = split(campo9, partes, ";")
-                        for (i = 1; i <= n_partes; i++){
-                                if (index(partes[i], prefijo) == 1) {
-                                        resultado = substr(partes[i], length(prefijo) +1)
-                                }
-                        }
-                        return resultado
-                }
- 
-                # PASO 1: Leer los genes (igual que antes)
-                $3 == "gene" {
-                        gid = sacar_valor($9, "ID=")
-                        len = $5 - $4 + 1
-                        if (len < 1) len = 1
-                        gene_len[gid] = len
-                        orden[++n_genes] = gid
-                }
- 
-                # PASO 2 y 3: Mapear CUALQUIER transcrito -> su gen, y contar
-                # la isoforma en el momento (igual jerarquia que el Modulo 2:
-                $3 != "gene" && $3 != "exon" && $3 != "CDS" && \
-                $3 != "five_prime_UTR" && $3 != "three_prime_UTR" {
-                        id_tx     = sacar_valor($9, "ID=")
-                        id_parent = sacar_valor($9, "Parent=")
-                        if (id_tx != "" && id_parent ~ /^gene-/) {
-                                tx_gene[id_tx] = id_parent
-                                isoformas[id_parent]++
-                        }
-                }
- 
-                # PASO 4: Exon -> su transcrito (Parent) -> su gen (tx_gene)
-                $3 == "exon" {
-                        id_padre_tx = sacar_valor($9, "Parent=")
-                        gid = tx_gene[id_padre_tx]
-                        if (gid != "") {
-                                exones[gid]++
-                        }
-                }
- 
-                END {
-                        for (i = 1; i <= n_genes; i++) {
-                                gid = orden[i]
-                                len = gene_len[gid]
-                                ex = exones[gid] + 0
-                                iso = isoformas[gid] + 0
-                                if (iso > 0)
-                                        densidad = iso / (len / 1000)
-                                else
-                                        densidad = 0
-                                printf "%s\t%d\t%d\t%d\t%.4f\n", gid, len, ex, iso, densidad
-                        }
-                }' "$ARCHIVO_INPUT" > /tmp/genes_datos.tmp
-                TOTAL=$(wc -l < /tmp/genes_datos.tmp)
-                if [ "$TOTAL" -lt 2 ]
-                then
-                        echo -e "${ROJO}ERROR: se necesita al menos 2 genes con datos...${RESET}"
-                        rm -f /tmp/genes_datos.tmp
-                        continue
-                fi
-                MED_LONG=$(sort -t$'\t' -k2,2n /tmp/genes_datos.tmp | awk -F'\t' -v t="$TOTAL" 'NR==int(t/2){print $2; exit}')
-                MED_ISO=$(sort -t$'\t' -k4,4n /tmp/genes_datos.tmp  | awk -F'\t' -v t="$TOTAL" 'NR==int(t/2){print $4; exit}')
-                read -r R_VALOR INTERPRETACION <<< "$(awk -F'\t' -v n="$TOTAL" '
-                {
-                        x=$2; y=$4
-                        sumx+=x; sumy+=y
-                        sumxy+=x*y
-                        sumx2+=x*x
-                        sumy2+=y*y
-                }
-                END {
-                        num = (n*sumxy) - (sumx*sumy)
-                        den = sqrt(((n*sumx2)-(sumx*sumx)) * ((n*sumy2)-(sumy*sumy)))
-                        r = (den !=0) ? num/den : 0
-                        abs_r = (r<0) ? -r : r
-                        if (abs_r < 0.1)        etiqueta="PRACTICAMENTE_NULA"
-                        else if (abs_r < 0.3)   etiqueta="DEBIL"
-                        else if (abs_r < 0.5)   etiqueta="MODERADA"
-                        else if (abs_r < 0.7)   etiqueta="FUERTE"
-                        else                    etiqueta="MUY_FUERTE"
-                        printf "%.4f %s", r, etiqueta
-                }' /tmp/genes_datos.tmp)"
-                awk -F'\t' -v ml="$MED_LONG" -v mi="$MED_ISO" '
-                {
-                        gid=$1; len=$2; ex=$3; iso=$4; dens=$5
-                        if (len <= ml && iso > mi)      cuad="COMPACTO_COMPLEJO"
-                        else if(len > ml && iso > mi)   cuad="GIGANTE_COMPLEJO"
-                        else if (len <= ml && iso <= mi) cuad="COMPACTO_SIMPLE"
-                        else                            cuad="GIGANTE_SIMPLE"
-                        print gid"\t"len"\t"ex"\t"iso"\t"dens"\t"cuad
-                }' /tmp/genes_datos.tmp > /tmp/genes_cuadrantes.tmp
-                N_CC=$(awk -F'\t' '$6=="COMPACTO_COMPLEJO"' /tmp/genes_cuadrantes.tmp | wc -l)
-                N_GC=$(awk -F'\t' '$6=="GIGANTE_COMPLEJO"'  /tmp/genes_cuadrantes.tmp | wc -l)
-                N_CS=$(awk -F'\t' '$6=="COMPACTO_SIMPLE"'   /tmp/genes_cuadrantes.tmp | wc -l)
-                N_GS=$(awk -F'\t' '$6=="GIGANTE_SIMPLE"'    /tmp/genes_cuadrantes.tmp | wc -l)
-                CAMPEON=$(awk -F'\t' '$6=="COMPACTO_COMPLEJO"' /tmp/genes_cuadrantes.tmp | sort -t$'\t' -k5,5nr | head -1)
-                GIGANTE_DORMIDO=$(awk -F'\t' '$6=="GIGANTE_SIMPLE"' /tmp/genes_cuadrantes.tmp | sort -t$'\t' -k2,2nr | head -1)
-                if [ -z "$GIGANTE_DORMIDO" ]
-                then
-                        GIGANTE_DORMIDO="NINGUNO        0       0       0       0       NINGUNO"
-                fi
-                {
-                        echo -e "${AMARILLO}=================================================${RESET}"
-                        echo " -- ANALISIS DE CORRELACION: ESTRUCTURA VS COMPLEJIDAD -- "
-                        echo " ------------------------------------------------------"
-                        echo " Genes analizados: $TOTAL"
-                        echo " Longitud mediana de gen: $MED_LONG pb"
-                        echo " Isoformas medianas por gen: $MED_ISO"
-                        echo ""
-                        echo "-----------------------------"
-                        echo "COEFICIENTE DE CORRELACION DE PEARSON (r):"
-                        echo " Longitud genica vs Numero de isoformas"
-                        echo " r =$R_VALOR -> Correlacion: $INTERPRETACION"
-                        echo ""
-                        case "$R_VALOR" in
-                                -*) echo "  Interpretacion: a mayor longitud, TIENDE A HABER MENOS splicing." ;;
-                                *)  echo "  Interpretacion: a mayor longitud, TIENDE A HABER MAS splicing." ;;
-                        esac
-                        echo " -----------------------------"
-                        echo "DISTRIBUCION DE CUADRANTES:"
-                        echo " Genes compactos con alta complejidad transcriptómica  : $N_CC genes"
-                        echo " Gigantes y complejos (lo esperado)       : $N_GC genes"
-                        echo " Genes extensos con baja complejidad transcriptómica   : $N_CS genes"
-                        echo " Gigantes y Simples (espacio 'desperdiciado')     : $N_GS genes"
-                        echo "-----------------------"
-                        echo "TOP 10 CAMPEONES DE EFICIENCIA REGULATORIA:"
-                        echo "(mas isoformas por cada 1000 pb -> maxima complejidad en minimo espacio)"
-                        awk -F'\t' '$6=="COMPACTO_COMPLEJO"' /tmp/genes_cuadrantes.tmp | sort -t$'\t' -k5,5nr | head -10 | \
-                                awk -F'\t' '{printf "%2d. %-20s Long:%-8s Exones:%-4s Isoformas:%-4s Densidad:%-6s iso/kb  Cuadrante:%s\n", NR,$1,$2,$3,$4,$5,$6}'
-                        echo  "-----------------------------------------------"
-                        echo ">>> GEN CON MAYOR DENSIDAD TRANSCRIPTÓMICA"
-                        echo " $(echo "$CAMPEON" | cut -f1)  ($(echo "$CAMPEON" | cut -f4) isoformas en solo $(echo "$CAMPEON" | cut -f2) pb)"
-                        echo ">>> GIGANTE DORMIDO (gen + largo con splincing casi nulo)"
-                        echo "  $(echo "$GIGANTE_DORMIDO" | cut -f1)  ($(echo "$GIGANTE_DORMIDO" | cut -f2) pb, solo $(echo "$GIGANTE_DORMIDO" | cut -f4) isoforma(s))"
-                        echo -e "${AMARILLO}====================================================${RESET}"
-                } | tee "$REPORTE"
-                rm -f /tmp/genes_datos.tmp /tmp/genes_cuadrantes.tmp
-                echo -e "${VERDE}[OK] Modulo 3 finalizado. Reporte guardado en '$REPORTE'.${RESET}"
-                ;;
-
-```
 
 -----
 
